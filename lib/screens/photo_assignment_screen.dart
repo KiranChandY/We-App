@@ -99,9 +99,9 @@ class _PhotoAssignmentScreenState extends State<PhotoAssignmentScreen> with Sing
   void _navigateToEventAlbum() {
     // Collect all assigned photos into a single list
     final List<AssetEntity> allAssignedPhotos = [];
-    _memberPhotos.values.forEach((photos) {
+    for (var photos in _memberPhotos.values) {
       allAssignedPhotos.addAll(photos);
-    });
+    }
     
     // Remove duplicates if any
     final uniquePhotos = allAssignedPhotos.toSet().toList();
@@ -222,7 +222,7 @@ class _PhotoAssignmentScreenState extends State<PhotoAssignmentScreen> with Sing
                         Positioned.fill(
                           child: Container(
                             decoration: BoxDecoration(
-                              color: Colors.blue.withOpacity(0.3),
+                              color: Colors.blue.withValues(red: 33, green: 150, blue: 243, alpha: 77),
                               border: Border.all(
                                 color: Colors.blue,
                                 width: 2,
@@ -357,7 +357,7 @@ class _PhotoAssignmentScreenState extends State<PhotoAssignmentScreen> with Sing
               color: Colors.white,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
+                  color: Colors.black.withValues(red: 0, green: 0, blue: 0, alpha: 26),
                   blurRadius: 4,
                   offset: const Offset(0, -2),
                 ),

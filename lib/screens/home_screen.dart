@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../providers/auth_provider.dart';
 import 'profile_screen.dart';
 import 'event_members_screen.dart';
 import 'event_details_screen.dart';

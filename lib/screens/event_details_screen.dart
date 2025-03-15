@@ -106,7 +106,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
                         Container(
                           padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
                           decoration: BoxDecoration(
-                            color: Colors.deepPurple.withOpacity(0.1),
+                            color: Colors.deepPurple.withValues(red: 103, green: 58, blue: 183, alpha: 26),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Row(
@@ -217,14 +217,16 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
                       itemCount: filteredMembers.length,
                       itemBuilder: (context, index) {
                         final member = filteredMembers[index];
-                        final bool isCurrentUserAdmin = true; // TODO: Replace with actual user role check
+                        const bool isCurrentUserAdmin = true; // TODO: Replace with actual user role check
                         final bool isMemberAdmin = member['role'] == 'Admin';
                         
                         return Card(
                           margin: const EdgeInsets.only(bottom: 8),
                           child: ListTile(
                             leading: CircleAvatar(
-                              backgroundColor: isMemberAdmin ? Colors.deepPurple : Colors.grey[300],
+                              backgroundColor: isMemberAdmin 
+                                  ? Colors.deepPurple.withValues(red: 103, green: 58, blue: 183, alpha: 26)
+                                  : Colors.grey.withValues(red: 158, green: 158, blue: 158, alpha: 26),
                               child: Text(
                                 member['avatar'],
                                 style: TextStyle(
@@ -248,8 +250,8 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
                                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                                   decoration: BoxDecoration(
                                     color: isMemberAdmin 
-                                      ? Colors.deepPurple.withOpacity(0.1)
-                                      : Colors.grey[100],
+                                      ? Colors.deepPurple.withValues(red: 103, green: 58, blue: 183, alpha: 26)
+                                      : Colors.grey.withValues(red: 158, green: 158, blue: 158, alpha: 26),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
                                   child: Text(
@@ -797,6 +799,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
   }
 
   Future<void> _selectPhotos() async {
+    final BuildContext contextRef = context;
     // Request permission to access photos
     final PermissionState permission = await PhotoManager.requestPermissionExtend();
     if (permission.isAuth) {
@@ -834,10 +837,10 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
                  photoDate.isBefore(endDateTime.add(const Duration(days: 1)));
         }).toList();
 
-        if (filteredPhotos.isNotEmpty) {
+        if (filteredPhotos.isNotEmpty && mounted) {
           // Show the review screen
           final List<AssetEntity>? selectedPhotos = await Navigator.push(
-            context,
+            contextRef,
             MaterialPageRoute(
               builder: (context) => PhotoReviewScreen(
                 selectedPhotos: filteredPhotos,
@@ -854,8 +857,8 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
             });
           }
         } else {
-          if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
+          if (mounted) {
+            ScaffoldMessenger.of(contextRef).showSnackBar(
               const SnackBar(
                 content: Text('No photos found in the selected date range'),
                 backgroundColor: Colors.red,
@@ -865,8 +868,8 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
         }
       }
     } else {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+      if (mounted) {
+        ScaffoldMessenger.of(contextRef).showSnackBar(
           const SnackBar(
             content: Text('Permission to access photos was denied'),
             backgroundColor: Colors.red,
@@ -877,20 +880,21 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
   }
 
   Future<void> _takePhoto() async {
+    final BuildContext contextRef = context;
     try {
       final XFile? photo = await _picker.pickImage(
         source: ImageSource.camera,
         imageQuality: 80,
       );
 
-      if (photo != null) {
+      if (photo != null && mounted) {
         setState(() {
           _images.add(photo.path);
         });
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        ScaffoldMessenger.of(contextRef).showSnackBar(
           SnackBar(content: Text('Error taking photo: $e')),
         );
       }
@@ -1050,10 +1054,13 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
     );
   }
 
-  void _showInviteLinkDialog() {
+  Future<void> _showInviteLinkDialog() async {
+    final BuildContext contextRef = context;
     final String inviteLink = 'https://weapp.com/events/${widget.eventId}';
+    if (!mounted) return;
+    
     showDialog(
-      context: context,
+      context: contextRef,
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text('Invite Link'),
@@ -1277,7 +1284,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
                               right: 8,
                               child: Container(
                                 decoration: BoxDecoration(
-                                  color: Colors.black.withOpacity(0.6),
+                                  color: Colors.black.withValues(red: 0, green: 0, blue: 0, alpha: 153),
                                   shape: BoxShape.circle,
                                 ),
                                 child: IconButton(

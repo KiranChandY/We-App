@@ -25,6 +25,51 @@ class _SignUpScreenState extends State<SignUpScreen> {
     super.dispose();
   }
 
+  Future<void> _handleGoogleSignIn(BuildContext context) async {
+    try {
+      await context.read<AuthProvider>().signInWithGoogle();
+      if (context.mounted) {
+        Navigator.pushReplacementNamed(context, '/home');
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString())),
+        );
+      }
+    }
+  }
+
+  Future<void> _handleAppleSignIn(BuildContext context) async {
+    try {
+      await context.read<AuthProvider>().signInWithApple();
+      if (context.mounted) {
+        Navigator.pushReplacementNamed(context, '/home');
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString())),
+        );
+      }
+    }
+  }
+
+  Future<void> _handleFacebookSignIn(BuildContext context) async {
+    try {
+      await context.read<AuthProvider>().signInWithFacebook();
+      if (context.mounted) {
+        Navigator.pushReplacementNamed(context, '/home');
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString())),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -191,16 +236,22 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     return ElevatedButton(
                       onPressed: auth.isLoading
                           ? null
-                          : () {
+                          : () async {
                               if (_formKey.currentState!.validate()) {
-                                auth.signUpWithEmail(
-                                  _emailController.text,
-                                  _passwordController.text,
-                                ).then((_) {
-                                  if (mounted) {
-                                    Navigator.pushReplacementNamed(context, '/home');
-                                  }
-                                });
+                                try {
+                                  await auth.signUpWithEmail(
+                                    _emailController.text,
+                                    _passwordController.text,
+                                  );
+                                  
+                                  if (!mounted) return;
+                                  Navigator.pushReplacementNamed(context, '/home');
+                                } catch (e) {
+                                  if (!mounted) return;
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text(e.toString())),
+                                  );
+                                }
                               }
                             },
                       style: ElevatedButton.styleFrom(
@@ -225,21 +276,15 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   children: [
                     _buildSocialLoginButton(
                       icon: Icons.g_mobiledata,
-                      onPressed: () {
-                        context.read<AuthProvider>().signInWithGoogle();
-                      },
+                      onPressed: () => _handleGoogleSignIn(context),
                     ),
                     _buildSocialLoginButton(
                       icon: Icons.apple,
-                      onPressed: () {
-                        context.read<AuthProvider>().signInWithApple();
-                      },
+                      onPressed: () => _handleAppleSignIn(context),
                     ),
                     _buildSocialLoginButton(
                       icon: Icons.facebook,
-                      onPressed: () {
-                        context.read<AuthProvider>().signInWithFacebook();
-                      },
+                      onPressed: () => _handleFacebookSignIn(context),
                     ),
                   ],
                 ),

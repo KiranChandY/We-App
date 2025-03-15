@@ -59,7 +59,7 @@ class AllMembersScreen extends StatelessWidget {
               final member = _allMembers[index];
               return Card(
                 margin: const EdgeInsets.only(bottom: 8),
-                color: Colors.white.withOpacity(0.1),
+                color: Colors.white.withValues(red: 255, green: 255, blue: 255, alpha: 26),
                 child: ListTile(
                   leading: CircleAvatar(
                     backgroundColor: Colors.deepPurple,
@@ -71,8 +71,8 @@ class AllMembersScreen extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                     decoration: BoxDecoration(
                       color: member['role'] == 'Admin' 
-                          ? Colors.deepPurple.withOpacity(0.2)
-                          : Colors.grey.withOpacity(0.2),
+                          ? Colors.deepPurple.withValues(red: 103, green: 58, blue: 183, alpha: 51)
+                          : Colors.grey.withValues(red: 158, green: 158, blue: 158, alpha: 51),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
