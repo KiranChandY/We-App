@@ -9,11 +9,13 @@ import 'photo_review_screen.dart';
 class EventDetailsScreen extends StatefulWidget {
   final String eventId;
   final String eventTitle;
+  final File? eventPhoto;
 
   const EventDetailsScreen({
     super.key,
     required this.eventId,
     required this.eventTitle,
+    this.eventPhoto,
   });
 
   @override
@@ -39,11 +41,13 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
     {'id': '3', 'name': 'Mike Johnson', 'email': 'mike@example.com', 'avatar': 'M', 'role': 'Member'},
     {'id': '4', 'name': 'Sarah Williams', 'email': 'sarah@example.com', 'avatar': 'S', 'role': 'Member'},
   ];
+  File? _eventPhoto;
 
   @override
   void initState() {
     super.initState();
     _eventTitleController.text = widget.eventTitle;
+    _eventPhoto = widget.eventPhoto;
   }
 
   @override
