@@ -106,7 +106,7 @@ class OrbitalPainter extends CustomPainter {
     // Draw orbiting profile images
     final orbitRadius = radius * 1.5;
     const orbitCount = 3;
-    final orbitSpeed = 2 * math.pi / orbitCount;
+    const orbitSpeed = 2 * math.pi / orbitCount;
 
     for (var i = 0; i < orbitCount; i++) {
       final angle = progress * 2 * math.pi + i * orbitSpeed;

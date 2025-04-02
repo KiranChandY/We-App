@@ -19,8 +19,8 @@ class FAQScreen extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.all(24),
               color: Colors.deepPurple,
-              child: Column(
-                children: const [
+              child: const Column(
+                children: [
                   Icon(
                     Icons.question_answer,
                     size: 48,
@@ -56,7 +56,7 @@ class FAQScreen extends StatelessWidget {
                 ),
                 FAQ(
                   question: 'How do I create an account?',
-                  answer: 'You can create an account using your email address, or sign up with your Google or Facebook account. Just tap the "Sign Up" button on the welcome screen and follow the instructions.',
+                  answer: 'You can create an account using your email address or sign up with your Google or Apple account. Just tap the "Sign Up" button on the welcome screen and follow the instructions.',
                 ),
                 FAQ(
                   question: 'Is WE free to use?',

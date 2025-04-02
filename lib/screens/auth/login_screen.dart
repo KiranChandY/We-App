@@ -182,12 +182,6 @@ class _LoginScreenState extends State<LoginScreen> {
                         context.read<AuthProvider>().signInWithApple();
                       },
                     ),
-                    _buildSocialLoginButton(
-                      icon: Icons.facebook,
-                      onPressed: () {
-                        context.read<AuthProvider>().signInWithFacebook();
-                      },
-                    ),
                   ],
                 ),
                 const SizedBox(height: 24),

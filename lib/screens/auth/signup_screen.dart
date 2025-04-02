@@ -28,45 +28,16 @@ class _SignUpScreenState extends State<SignUpScreen> {
   Future<void> _handleGoogleSignIn(BuildContext context) async {
     try {
       await context.read<AuthProvider>().signInWithGoogle();
-      if (context.mounted) {
-        Navigator.pushReplacementNamed(context, '/home');
-      }
     } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString())),
-        );
-      }
+      // Handle error
     }
   }
 
   Future<void> _handleAppleSignIn(BuildContext context) async {
     try {
       await context.read<AuthProvider>().signInWithApple();
-      if (context.mounted) {
-        Navigator.pushReplacementNamed(context, '/home');
-      }
     } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString())),
-        );
-      }
-    }
-  }
-
-  Future<void> _handleFacebookSignIn(BuildContext context) async {
-    try {
-      await context.read<AuthProvider>().signInWithFacebook();
-      if (context.mounted) {
-        Navigator.pushReplacementNamed(context, '/home');
-      }
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString())),
-        );
-      }
+      // Handle error
     }
   }
 
@@ -281,10 +252,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     _buildSocialLoginButton(
                       icon: Icons.apple,
                       onPressed: () => _handleAppleSignIn(context),
-                    ),
-                    _buildSocialLoginButton(
-                      icon: Icons.facebook,
-                      onPressed: () => _handleFacebookSignIn(context),
                     ),
                   ],
                 ),

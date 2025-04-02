@@ -79,21 +79,6 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
-  Future<void> signInWithFacebook() async {
-    try {
-      _isLoading = true;
-      _error = null;
-      notifyListeners();
-
-      await _authService.signInWithFacebook();
-    } catch (e) {
-      _error = e.toString();
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
-  }
-
   Future<void> signOut() async {
     try {
       _isLoading = true;

@@ -11,7 +11,7 @@
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
-	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+	<string>com.kiranchand.weapp</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
@@ -29,7 +29,7 @@
 			<string>Editor</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>com.googleusercontent.apps.577288380321-42ig75ev6r8kaohn0u5d0vj0js8u9h0b</string>
+				<string>com.googleusercontent.apps.577288380321-0mfm3r1jjsg7erpqicllhur7ap7v57so.apps.googleusercontent.com</string>
 			</array>
 		</dict>
 	</array>
@@ -38,13 +38,11 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>
-	<string>We need access to your camera for face scanning during signup to enable secure facial recognition.</string>
+	<string>This app needs access to camera to take photos</string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>We do not need microphone access. This permission is part of the camera system.</string>
-	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>This app needs access to your photo library to save photos for your event.</string>
+	<string>This app needs access to microphone for videos</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>This app needs access to your photo library to select photos for your event.</string>
+	<string>This app needs access to photos for sharing images</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>

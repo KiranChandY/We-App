@@ -37,8 +37,8 @@ class HelpSupportScreen extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.all(24),
               color: Colors.deepPurple,
-              child: Column(
-                children: const [
+              child: const Column(
+                children: [
                   Icon(
                     Icons.support_agent,
                     size: 48,
