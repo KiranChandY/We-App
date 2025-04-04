@@ -10,12 +10,14 @@ class EventDetailsScreen extends StatefulWidget {
   final String eventId;
   final String eventTitle;
   final File? eventPhoto;
+  final String eventType;
 
   const EventDetailsScreen({
     super.key,
     required this.eventId,
     required this.eventTitle,
     this.eventPhoto,
+    required this.eventType,
   });
 
   @override
@@ -23,7 +25,7 @@ class EventDetailsScreen extends StatefulWidget {
 }
 
 class _EventDetailsScreenState extends State<EventDetailsScreen> {
-  final List<String> _images = []; // This will store image URLs from Firebase Storage
+  final List<AssetEntity> _images = []; // This will store AssetEntity objects
   final ImagePicker _picker = ImagePicker();
   final TextEditingController _startDateController = TextEditingController();
   final TextEditingController _startTimeController = TextEditingController();
@@ -541,7 +543,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
     return showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFF1C1C1E),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -568,7 +570,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
-                            color: Colors.black,
+                            color: Colors.white,
                           ),
                         ),
                         IconButton(
@@ -582,7 +584,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
                       'Please select the time frame from which you want to choose photos:',
                       style: TextStyle(
                         fontSize: 14,
-                        color: Colors.black,
+                        color: Colors.white,
                       ),
                     ),
                     const SizedBox(height: 24),
@@ -591,7 +593,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: Colors.black,
+                        color: Colors.white,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -618,15 +620,15 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
                             },
                             decoration: InputDecoration(
                               labelText: 'Date',
-                              labelStyle: const TextStyle(color: Colors.black),
+                              labelStyle: const TextStyle(color: Colors.white),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               filled: true,
-                              fillColor: Colors.grey[100],
-                              suffixIcon: const Icon(Icons.calendar_today, color: Colors.black),
+                              fillColor: Colors.grey[800],
+                              suffixIcon: const Icon(Icons.calendar_today, color: Colors.white),
                             ),
-                            style: const TextStyle(color: Colors.black),
+                            style: const TextStyle(color: Colors.white),
                           ),
                         ),
                         const SizedBox(width: 8),
@@ -649,15 +651,15 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
                             },
                             decoration: InputDecoration(
                               labelText: 'Time',
-                              labelStyle: const TextStyle(color: Colors.black),
+                              labelStyle: const TextStyle(color: Colors.white),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               filled: true,
-                              fillColor: Colors.grey[100],
-                              suffixIcon: const Icon(Icons.access_time, color: Colors.black),
+                              fillColor: Colors.grey[800],
+                              suffixIcon: const Icon(Icons.access_time, color: Colors.white),
                             ),
-                            style: const TextStyle(color: Colors.black),
+                            style: const TextStyle(color: Colors.white),
                           ),
                         ),
                       ],
@@ -668,7 +670,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: Colors.black,
+                        color: Colors.white,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -695,15 +697,15 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
                             },
                             decoration: InputDecoration(
                               labelText: 'Date',
-                              labelStyle: const TextStyle(color: Colors.black),
+                              labelStyle: const TextStyle(color: Colors.white),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               filled: true,
-                              fillColor: Colors.grey[100],
-                              suffixIcon: const Icon(Icons.calendar_today, color: Colors.black),
+                              fillColor: Colors.grey[800],
+                              suffixIcon: const Icon(Icons.calendar_today, color: Colors.white),
                             ),
-                            style: const TextStyle(color: Colors.black),
+                            style: const TextStyle(color: Colors.white),
                           ),
                         ),
                         const SizedBox(width: 8),
@@ -726,15 +728,15 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
                             },
                             decoration: InputDecoration(
                               labelText: 'Time',
-                              labelStyle: const TextStyle(color: Colors.black),
+                              labelStyle: const TextStyle(color: Colors.white),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               filled: true,
-                              fillColor: Colors.grey[100],
-                              suffixIcon: const Icon(Icons.access_time, color: Colors.black),
+                              fillColor: Colors.grey[800],
+                              suffixIcon: const Icon(Icons.access_time, color: Colors.white),
                             ),
-                            style: const TextStyle(color: Colors.black),
+                            style: const TextStyle(color: Colors.white),
                           ),
                         ),
                       ],
@@ -804,78 +806,116 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
 
   Future<void> _selectPhotos() async {
     final BuildContext contextRef = context;
-    // Request permission to access photos
-    final PermissionState permission = await PhotoManager.requestPermissionExtend();
-    if (permission.isAuth) {
+    try {
+      // Request permission to access photos
+      final PermissionState permission = await PhotoManager.requestPermissionExtend();
+      if (!permission.isAuth) {
+        if (mounted) {
+          ScaffoldMessenger.of(contextRef).showSnackBar(
+            const SnackBar(
+              content: Text('Permission to access photos was denied'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        return;
+      }
+
       // Get all photos
       final List<AssetPathEntity> albums = await PhotoManager.getAssetPathList(
         type: RequestType.image,
       );
       
-      if (albums.isNotEmpty) {
-        final List<AssetEntity> allPhotos = await albums.first.getAssetListRange(
-          start: 0,
-          end: 10000, // Adjust this number based on your needs
-        );
-
-        // Use the selected date/time values from the bottom sheet
-        final startDateTime = DateTime(
-          _startDate!.year,
-          _startDate!.month,
-          _startDate!.day,
-          _startTime!.hour,
-          _startTime!.minute,
-        );
-        final endDateTime = DateTime(
-          _endDate!.year,
-          _endDate!.month,
-          _endDate!.day,
-          _endTime!.hour,
-          _endTime!.minute,
-        );
-
-        // Filter photos by date range
-        final List<AssetEntity> filteredPhotos = allPhotos.where((photo) {
-          final DateTime photoDate = photo.createDateTime;
-          return photoDate.isAfter(startDateTime) && 
-                 photoDate.isBefore(endDateTime.add(const Duration(days: 1)));
-        }).toList();
-
-        if (filteredPhotos.isNotEmpty && mounted) {
-          // Show the review screen
-          final List<AssetEntity>? selectedPhotos = await Navigator.push(
-            contextRef,
-            MaterialPageRoute(
-              builder: (context) => PhotoReviewScreen(
-                selectedPhotos: filteredPhotos,
-                startDate: startDateTime,
-                endDate: endDateTime,
-                members: _members.map((m) => m['name'] as String).toList(),
-              ),
+      if (albums.isEmpty) {
+        if (mounted) {
+          ScaffoldMessenger.of(contextRef).showSnackBar(
+            const SnackBar(
+              content: Text('No photo albums found'),
+              backgroundColor: Colors.red,
             ),
           );
-
-          if (selectedPhotos != null && mounted) {
-            setState(() {
-              _images.addAll(selectedPhotos.map((photo) => photo.id));
-            });
-          }
-        } else {
-          if (mounted) {
-            ScaffoldMessenger.of(contextRef).showSnackBar(
-              const SnackBar(
-                content: Text('No photos found in the selected date range'),
-                backgroundColor: Colors.red,
-              ),
-            );
-          }
         }
+        return;
       }
-    } else {
+
+      // Get photos from first album
+      final List<AssetEntity> allPhotos = await albums.first.getAssetListRange(
+        start: 0,
+        end: 10000, // Adjust this number based on your needs
+      );
+
+      if (allPhotos.isEmpty) {
+        if (mounted) {
+          ScaffoldMessenger.of(contextRef).showSnackBar(
+            const SnackBar(
+              content: Text('No photos found in album'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        return;
+      }
+
+      // Use the selected date/time values
+      final startDateTime = DateTime(
+        _startDate!.year,
+        _startDate!.month,
+        _startDate!.day,
+        _startTime!.hour,
+        _startTime!.minute,
+      );
+      final endDateTime = DateTime(
+        _endDate!.year,
+        _endDate!.month,
+        _endDate!.day,
+        _endTime!.hour,
+        _endTime!.minute,
+      );
+
+      // Filter photos by date range
+      final List<AssetEntity> filteredPhotos = allPhotos.where((photo) {
+        final DateTime photoDate = photo.createDateTime;
+        return photoDate.isAfter(startDateTime) && 
+               photoDate.isBefore(endDateTime.add(const Duration(days: 1)));
+      }).toList();
+
+      if (filteredPhotos.isEmpty) {
+        if (mounted) {
+          ScaffoldMessenger.of(contextRef).showSnackBar(
+            const SnackBar(
+              content: Text('No photos found in the selected date range'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        return;
+      }
+
+      if (!mounted) return;
+
+      // Show the review screen
+      final List<AssetEntity>? selectedPhotos = await Navigator.push(
+        contextRef,
+        MaterialPageRoute(
+          builder: (context) => PhotoReviewScreen(
+            selectedPhotos: filteredPhotos,
+            startDate: startDateTime,
+            endDate: endDateTime,
+            members: _members.map((m) => m['name'] as String).toList(),
+          ),
+        ),
+      );
+
+      if (selectedPhotos != null && mounted) {
+        setState(() {
+          _images.addAll(selectedPhotos);
+        });
+      }
+    } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(contextRef).showSnackBar(
-          const SnackBar(
-            content: Text('Permission to access photos was denied'),
+          SnackBar(
+            content: Text('Error selecting photos: $e'),
             backgroundColor: Colors.red,
           ),
         );
@@ -892,9 +932,21 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
       );
 
       if (photo != null && mounted) {
-        setState(() {
-          _images.add(photo.path);
-        });
+        // Convert XFile to AssetEntity
+        final List<AssetPathEntity> albums = await PhotoManager.getAssetPathList(
+          type: RequestType.image,
+        );
+        if (albums.isNotEmpty) {
+          final List<AssetEntity> recentPhotos = await albums.first.getAssetListRange(
+            start: 0,
+            end: 1,
+          );
+          if (recentPhotos.isNotEmpty) {
+            setState(() {
+              _images.add(recentPhotos.first);
+            });
+          }
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -1161,10 +1213,179 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
             onPressed: _showEventSettings,
           ),
           TextButton.icon(
-            onPressed: _showManageMembers,
-            icon: const Icon(Icons.people, color: Colors.deepPurple),
+            onPressed: () {
+              showModalBottomSheet(
+                context: context,
+                backgroundColor: Colors.white,
+                isScrollControlled: true,
+                shape: const RoundedRectangleBorder(
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                ),
+                builder: (context) => Container(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const Text(
+                        'Invite Members',
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 24),
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.grey[200],
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Column(
+                          children: [
+                            Text(
+                              widget.eventTitle,
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
+                                Icon(Icons.photo_library, color: Colors.grey[800], size: 20),
+                                const SizedBox(width: 4),
+                                Text('${_images.length}', style: TextStyle(color: Colors.grey[800])),
+                                const SizedBox(width: 16),
+                                Icon(Icons.people, color: Colors.grey[800], size: 20),
+                                const SizedBox(width: 4),
+                                Text('${_members.length}', style: TextStyle(color: Colors.grey[800])),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      ElevatedButton.icon(
+                        onPressed: () {
+                          // Implement share link functionality
+                          Clipboard.setData(ClipboardData(text: 'join.photocircleapp.com/389C0R9C9K'));
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Join link copied to clipboard')),
+                          );
+                        },
+                        icon: const Icon(Icons.share, color: Colors.white),
+                        label: const Text(
+                          'Share Join Link',
+                          style: TextStyle(color: Colors.white, fontSize: 16),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.grey[100],
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.grey.shade300),
+                        ),
+                        child: Row(
+                          children: [
+                            const Expanded(
+                              child: Text(
+                                'join.photocircleapp.com/389C0R9C9K',
+                                style: TextStyle(
+                                  color: Colors.red,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.copy, color: Colors.grey),
+                              onPressed: () {
+                                Clipboard.setData(ClipboardData(text: 'join.photocircleapp.com/389C0R9C9K'));
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('Join link copied to clipboard')),
+                                );
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      const Text(
+                        'OTHER OPTIONS',
+                        style: TextStyle(
+                          color: Colors.grey,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.grey.shade300),
+                        ),
+                        child: Column(
+                          children: [
+                            ListTile(
+                              leading: Icon(Icons.people_outline, color: Colors.grey[800]),
+                              title: Text(
+                                'Invite Existing Users',
+                                style: TextStyle(color: Colors.grey[800]),
+                              ),
+                              subtitle: Text(
+                                'Select users from your circles',
+                                style: TextStyle(color: Colors.grey[600]),
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              onTap: () {
+                                // Implement invite existing users
+                              },
+                            ),
+                            Divider(height: 1, color: Colors.grey[300]),
+                            ListTile(
+                              leading: Icon(Icons.qr_code, color: Colors.grey[800]),
+                              title: Text(
+                                'Show QR Code',
+                                style: TextStyle(color: Colors.grey[800]),
+                              ),
+                              subtitle: Text(
+                                'Print a code that others can scan',
+                                style: TextStyle(color: Colors.grey[600]),
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              onTap: () {
+                                // Implement QR code functionality
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+            icon: const Icon(Icons.person_add, color: Colors.deepPurple),
             label: const Text(
-              'Members',
+              'Invite',
               style: TextStyle(
                 color: Colors.deepPurple,
                 fontWeight: FontWeight.bold,
@@ -1176,65 +1397,46 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
           ),
         ],
       ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          showModalBottomSheet(
+            context: context,
+            backgroundColor: Colors.white,
+            builder: (context) => Container(
+              padding: const EdgeInsets.all(16),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  ListTile(
+                    leading: const Icon(Icons.photo_library, color: Colors.black),
+                    title: const Text('Choose from Gallery', style: TextStyle(color: Colors.black)),
+                    onTap: () {
+                      Navigator.pop(context);
+                      _showTimeFrameDialog();
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.camera_alt, color: Colors.black),
+                    title: const Text('Take a Photo', style: TextStyle(color: Colors.black)),
+                    onTap: () {
+                      Navigator.pop(context);
+                      _takePhoto();
+                    },
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+        backgroundColor: Colors.deepPurple,
+        child: const Icon(Icons.add_photo_alternate, color: Colors.white),
+      ),
       body: Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  'Event Photos',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
-                  ),
-                ),
-                FilledButton.icon(
-                  onPressed: () {
-                    showModalBottomSheet(
-                      context: context,
-                      backgroundColor: Colors.white,
-                      builder: (context) => Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: const BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-                        ),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            ListTile(
-                              leading: const Icon(Icons.photo_library, color: Colors.black),
-                              title: const Text('Choose from Gallery', style: TextStyle(color: Colors.black)),
-                              onTap: () {
-                                Navigator.pop(context);
-                                _showTimeFrameDialog();
-                              },
-                            ),
-                            ListTile(
-                              leading: const Icon(Icons.camera_alt, color: Colors.black),
-                              title: const Text('Take a Photo', style: TextStyle(color: Colors.black)),
-                              onTap: () {
-                                Navigator.pop(context);
-                                _takePhoto();
-                              },
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                  icon: const Icon(Icons.add_photo_alternate, color: Colors.black),
-                  label: const Text('Add Photos', style: TextStyle(color: Colors.black)),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: Colors.deepPurple,
-                  ),
-                ),
-              ],
-            ),
-          ),
           Expanded(
             child: _images.isEmpty
                 ? Center(
@@ -1256,7 +1458,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'Tap the button above to add photos',
+                          'Tap the + button to add photos',
                           style: TextStyle(
                             fontSize: 14,
                             color: Colors.grey[800],
@@ -1274,21 +1476,32 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
                     ),
                     itemCount: _images.length,
                     itemBuilder: (context, index) {
+                      final photo = _images[index];
                       return ClipRRect(
                         borderRadius: BorderRadius.circular(12),
                         child: Stack(
                           fit: StackFit.expand,
                           children: [
-                            Image.file(
-                              File(_images[index]),
-                              fit: BoxFit.cover,
+                            FutureBuilder<Uint8List?>(
+                              future: photo.thumbnailData,
+                              builder: (context, snapshot) {
+                                if (snapshot.hasData) {
+                                  return Image.memory(
+                                    snapshot.data!,
+                                    fit: BoxFit.cover,
+                                  );
+                                }
+                                return const Center(
+                                  child: CircularProgressIndicator(),
+                                );
+                              },
                             ),
                             Positioned(
                               top: 8,
                               right: 8,
                               child: Container(
                                 decoration: BoxDecoration(
-                                  color: Colors.black.withValues(red: 0, green: 0, blue: 0, alpha: 153),
+                                  color: Colors.black.withOpacity(0.6),
                                   shape: BoxShape.circle,
                                 ),
                                 child: IconButton(

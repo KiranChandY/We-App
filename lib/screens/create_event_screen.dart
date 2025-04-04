@@ -1,0 +1,663 @@
+import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:share_plus/share_plus.dart';
+import 'dart:io';
+import 'event_details_screen.dart';
+
+class CreateEventScreen extends StatefulWidget {
+  const CreateEventScreen({super.key});
+
+  @override
+  State<CreateEventScreen> createState() => _CreateEventScreenState();
+}
+
+class _CreateEventScreenState extends State<CreateEventScreen> {
+  final _formKey = GlobalKey<FormState>();
+  final TextEditingController _titleController = TextEditingController();
+  final TextEditingController _searchController = TextEditingController();
+  final ImagePicker _picker = ImagePicker();
+  File? _eventPhoto;
+  String _selectedEventType = 'Custom';
+  final List<Map<String, dynamic>> _allMembers = [
+    {'id': '1', 'name': 'John Doe', 'email': 'john@example.com', 'avatar': 'J', 'selected': false},
+    {'id': '2', 'name': 'Jane Smith', 'email': 'jane@example.com', 'avatar': 'J', 'selected': false},
+    {'id': '3', 'name': 'Bob Wilson', 'email': 'bob@example.com', 'avatar': 'B', 'selected': false},
+    {'id': '4', 'name': 'Alice Brown', 'email': 'alice@example.com', 'avatar': 'A', 'selected': false},
+    {'id': '5', 'name': 'Charlie Davis', 'email': 'charlie@example.com', 'avatar': 'C', 'selected': false},
+  ];
+  List<Map<String, dynamic>> _searchResults = [];
+  final List<Map<String, dynamic>> _selectedMembers = [];
+
+  final List<Map<String, dynamic>> _eventTypes = [
+    {'type': 'Trip', 'icon': Icons.flight_takeoff, 'color': Colors.blue},
+    {'type': 'Group for Your Child', 'icon': Icons.child_care, 'color': Colors.pink},
+    {'type': 'Wedding', 'icon': Icons.favorite, 'color': Colors.red},
+    {'type': 'Birthday', 'icon': Icons.cake, 'color': Colors.orange},
+    {'type': 'Anniversary', 'icon': Icons.celebration, 'color': Colors.purple},
+    {'type': 'Graduation', 'icon': Icons.school, 'color': Colors.green},
+    {'type': 'Custom', 'icon': Icons.event, 'color': Colors.deepPurple},
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _searchResults = List.from(_allMembers);
+  }
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _searchMembers(String query) {
+    setState(() {
+      if (query.isEmpty) {
+        _searchResults = List.from(_allMembers);
+      } else {
+        _searchResults = _allMembers
+            .where((member) =>
+                member['name'].toString().toLowerCase().contains(query.toLowerCase()) ||
+                member['email'].toString().toLowerCase().contains(query.toLowerCase()))
+            .toList();
+      }
+    });
+  }
+
+  void _toggleMemberSelection(Map<String, dynamic> member) {
+    setState(() {
+      member['selected'] = !member['selected'];
+      if (member['selected']) {
+        _selectedMembers.add(member);
+      } else {
+        _selectedMembers.removeWhere((m) => m['id'] == member['id']);
+      }
+    });
+  }
+
+  void _showMemberSelectionSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setState) {
+            return Container(
+              height: MediaQuery.of(context).size.height * 0.85,
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+              ),
+              child: Column(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text(
+                              'Select Members',
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.close),
+                              onPressed: () => Navigator.pop(context),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        TextField(
+                          controller: _searchController,
+                          onChanged: (query) {
+                            setState(() {
+                              _searchMembers(query);
+                            });
+                          },
+                          decoration: InputDecoration(
+                            hintText: 'Search members...',
+                            prefixIcon: const Icon(Icons.search),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            filled: true,
+                            fillColor: Colors.grey[100],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Expanded(
+                    child: ListView.builder(
+                      padding: const EdgeInsets.all(16),
+                      itemCount: _searchResults.length,
+                      itemBuilder: (context, index) {
+                        final member = _searchResults[index];
+                        return Card(
+                          margin: const EdgeInsets.only(bottom: 8),
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            side: BorderSide(
+                              color: member['selected']
+                                  ? Colors.deepPurple
+                                  : Colors.grey.withOpacity(0.2),
+                              width: 1,
+                            ),
+                          ),
+                          color: member['selected']
+                              ? Colors.deepPurple.withOpacity(0.1)
+                              : Colors.white,
+                          child: ListTile(
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            leading: CircleAvatar(
+                              backgroundColor: member['selected']
+                                  ? Colors.deepPurple
+                                  : Colors.deepPurple.withOpacity(0.1),
+                              child: Text(
+                                member['avatar'],
+                                style: TextStyle(
+                                  color: member['selected'] ? Colors.white : Colors.deepPurple,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                            title: Text(
+                              member['name'],
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            subtitle: Text(member['email']),
+                            trailing: IconButton(
+                              icon: Icon(
+                                member['selected']
+                                    ? Icons.check_circle
+                                    : Icons.check_circle_outline,
+                                color: member['selected']
+                                    ? Colors.deepPurple
+                                    : Colors.grey,
+                                size: 28,
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  _toggleMemberSelection(member);
+                                });
+                              },
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 8,
+                          offset: const Offset(0, -4),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            'Selected: ${_selectedMembers.length} members',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                        FilledButton.icon(
+                          onPressed: () {
+                            Navigator.pop(context);
+                            setState(() {});
+                          },
+                          icon: const Icon(Icons.check),
+                          label: const Text('Add Selected'),
+                          style: FilledButton.styleFrom(
+                            backgroundColor: Colors.deepPurple,
+                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _proceedToEventDetails() {
+    if (_formKey.currentState!.validate()) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => EventDetailsScreen(
+            eventId: DateTime.now().millisecondsSinceEpoch.toString(),
+            eventTitle: _titleController.text,
+            eventPhoto: _eventPhoto,
+            eventType: _selectedEventType,
+          ),
+        ),
+      );
+    }
+  }
+
+  void _inviteMembers() {
+    Share.share(
+      'Join our event sharing app! Download it now and stay connected with your friends and family.',
+      subject: 'Invitation to join WE App',
+    );
+  }
+
+  Future<void> _pickEventPhoto() async {
+    try {
+      final XFile? image = await _picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 80,
+      );
+      
+      if (image != null) {
+        setState(() {
+          _eventPhoto = File(image.path);
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error picking image: $e')),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        title: const Text('Create New Event'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+      ),
+      body: Form(
+        key: _formKey,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Event Photo in Circle
+                          Container(
+                            width: 120,
+                            height: 120,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: Colors.deepPurple.withOpacity(0.2),
+                                width: 2,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.deepPurple.withOpacity(0.1),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: ClipOval(
+                              child: GestureDetector(
+                                onTap: _pickEventPhoto,
+                                child: _eventPhoto == null
+                                    ? Container(
+                                        color: Colors.grey[50],
+                                        child: Column(
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          children: [
+                                            Icon(
+                                              Icons.add_photo_alternate_rounded,
+                                              size: 40,
+                                              color: Colors.deepPurple.withOpacity(0.8),
+                                            ),
+                                            const SizedBox(height: 8),
+                                            Text(
+                                              'Add Photo',
+                                              style: TextStyle(
+                                                fontSize: 14,
+                                                color: Colors.deepPurple.withOpacity(0.8),
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      )
+                                    : Stack(
+                                        fit: StackFit.expand,
+                                        children: [
+                                          Image.file(
+                                            _eventPhoto!,
+                                            fit: BoxFit.cover,
+                                          ),
+                                          Container(
+                                            decoration: BoxDecoration(
+                                              gradient: LinearGradient(
+                                                begin: Alignment.topCenter,
+                                                end: Alignment.bottomCenter,
+                                                colors: [
+                                                  Colors.black.withOpacity(0.3),
+                                                  Colors.black.withOpacity(0.1),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                          Positioned(
+                                            bottom: 8,
+                                            right: 8,
+                                            child: Container(
+                                              decoration: BoxDecoration(
+                                                color: Colors.white.withOpacity(0.9),
+                                                shape: BoxShape.circle,
+                                                boxShadow: [
+                                                  BoxShadow(
+                                                    color: Colors.black.withOpacity(0.1),
+                                                    blurRadius: 8,
+                                                    offset: const Offset(0, 2),
+                                                  ),
+                                                ],
+                                              ),
+                                              child: IconButton(
+                                                icon: const Icon(
+                                                  Icons.edit,
+                                                  color: Colors.deepPurple,
+                                                  size: 20,
+                                                ),
+                                                onPressed: _pickEventPhoto,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          // Event Title
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Event Title',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black87,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                TextFormField(
+                                  controller: _titleController,
+                                  decoration: InputDecoration(
+                                    hintText: 'Enter event title',
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    filled: true,
+                                    fillColor: Colors.grey[100],
+                                  ),
+                                  validator: (value) {
+                                    if (value == null || value.isEmpty) {
+                                      return 'Please enter an event title';
+                                    }
+                                    return null;
+                                  },
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    // Event Type Dropdown
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Event Type',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black87,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Container(
+                            decoration: BoxDecoration(
+                              color: Colors.grey[100],
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: DropdownButtonHideUnderline(
+                              child: DropdownButton<String>(
+                                value: _selectedEventType,
+                                isExpanded: true,
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                items: _eventTypes.map((type) {
+                                  return DropdownMenuItem<String>(
+                                    value: type['type'],
+                                    child: Row(
+                                      children: [
+                                        Icon(
+                                          type['icon'],
+                                          color: type['color'],
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Text(type['type']),
+                                      ],
+                                    ),
+                                  );
+                                }).toList(),
+                                onChanged: (String? newValue) {
+                                  if (newValue != null) {
+                                    setState(() {
+                                      _selectedEventType = newValue;
+                                    });
+                                  }
+                                },
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    // Event Members Section
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.05),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          children: [
+                            ListTile(
+                              title: const Text(
+                                'Event Members',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                              trailing: FilledButton.icon(
+                                onPressed: _showMemberSelectionSheet,
+                                icon: const Icon(Icons.add),
+                                label: const Text('Add Members'),
+                                style: FilledButton.styleFrom(
+                                  backgroundColor: Colors.deepPurple,
+                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            if (_selectedMembers.isEmpty)
+                              Container(
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: Colors.grey[50],
+                                  borderRadius: const BorderRadius.vertical(
+                                    bottom: Radius.circular(12),
+                                  ),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.people_outline,
+                                      color: Colors.grey[600],
+                                      size: 24,
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Text(
+                                      'No members added yet',
+                                      style: TextStyle(
+                                        color: Colors.grey[600],
+                                        fontSize: 16,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              )
+                            else
+                              Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.grey[50],
+                                  borderRadius: const BorderRadius.vertical(
+                                    bottom: Radius.circular(12),
+                                  ),
+                                ),
+                                child: ListView.builder(
+                                  shrinkWrap: true,
+                                  physics: const NeverScrollableScrollPhysics(),
+                                  itemCount: _selectedMembers.length,
+                                  itemBuilder: (context, index) {
+                                    final member = _selectedMembers[index];
+                                    return ListTile(
+                                      leading: CircleAvatar(
+                                        backgroundColor: Colors.deepPurple.withOpacity(0.1),
+                                        child: Text(
+                                          member['avatar'],
+                                          style: const TextStyle(
+                                            color: Colors.deepPurple,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                      title: Text(member['name']),
+                                      subtitle: Text(member['email']),
+                                      trailing: IconButton(
+                                        icon: const Icon(
+                                          Icons.remove_circle_outline,
+                                          color: Colors.red,
+                                        ),
+                                        onPressed: () {
+                                          setState(() {
+                                            member['selected'] = false;
+                                            _selectedMembers.remove(member);
+                                          });
+                                        },
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, -5),
+                  ),
+                ],
+              ),
+              child: FilledButton(
+                onPressed: _selectedMembers.isNotEmpty ? _proceedToEventDetails : null,
+                style: FilledButton.styleFrom(
+                  backgroundColor: Colors.deepPurple,
+                  minimumSize: const Size(double.infinity, 56),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Text(
+                  'Continue to Event Details',
+                  style: TextStyle(fontSize: 16),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+} 

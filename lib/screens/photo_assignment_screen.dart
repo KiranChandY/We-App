@@ -357,7 +357,7 @@ class _PhotoAssignmentScreenState extends State<PhotoAssignmentScreen> with Sing
               color: Colors.white,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(red: 0, green: 0, blue: 0, alpha: 26),
+                  color: Colors.black.withOpacity(0.1),
                   blurRadius: 4,
                   offset: const Offset(0, -2),
                 ),
@@ -391,9 +391,7 @@ class _PhotoAssignmentScreenState extends State<PhotoAssignmentScreen> with Sing
                     children: [
                       Expanded(
                         child: FilledButton(
-                          onPressed: () {
-                            _navigateToEventAlbum();
-                          },
+                          onPressed: _navigateToEventAlbum,
                           style: FilledButton.styleFrom(
                             backgroundColor: Colors.green,
                             padding: const EdgeInsets.symmetric(vertical: 16),

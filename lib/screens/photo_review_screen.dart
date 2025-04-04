@@ -138,7 +138,7 @@ class _PhotoReviewScreenState extends State<PhotoReviewScreen> {
               color: Colors.white,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(red: 0, green: 0, blue: 0, alpha: 26),
+                  color: Colors.black.withOpacity(0.1),
                   blurRadius: 4,
                   offset: const Offset(0, -2),
                 ),
@@ -153,6 +153,16 @@ class _PhotoReviewScreenState extends State<PhotoReviewScreen> {
                           .where((photo) => _selectedPhotoIds.contains(photo.id))
                           .toList();
                       
+                      if (selectedPhotos.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Please select at least one photo'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                        return;
+                      }
+
                       Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -161,7 +171,11 @@ class _PhotoReviewScreenState extends State<PhotoReviewScreen> {
                             members: widget.members,
                           ),
                         ),
-                      );
+                      ).then((value) {
+                        if (value != null) {
+                          Navigator.pop(context, value);
+                        }
+                      });
                     },
                     style: FilledButton.styleFrom(
                       backgroundColor: Colors.blue,

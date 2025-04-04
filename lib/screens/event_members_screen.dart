@@ -19,6 +19,7 @@ class _EventMembersScreenState extends State<EventMembersScreen> {
   final TextEditingController _searchController = TextEditingController();
   final ImagePicker _picker = ImagePicker();
   File? _eventPhoto;
+  String _selectedPrivacy = 'personal'; // 'personal' or 'public'
   final List<Map<String, dynamic>> _allMembers = [
     {'id': '1', 'name': 'John Doe', 'email': 'john@example.com', 'avatar': 'J', 'selected': false},
     {'id': '2', 'name': 'Jane Smith', 'email': 'jane@example.com', 'avatar': 'J', 'selected': false},
@@ -257,6 +258,7 @@ class _EventMembersScreenState extends State<EventMembersScreen> {
             eventId: DateTime.now().millisecondsSinceEpoch.toString(),
             eventTitle: _titleController.text,
             eventPhoto: _eventPhoto,
+            eventType: 'Custom', // Default event type
           ),
         ),
       );
@@ -315,36 +317,107 @@ class _EventMembersScreenState extends State<EventMembersScreen> {
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Event Title
-                          Expanded(
-                            flex: 2,
-                            child: TextFormField(
-                              controller: _titleController,
-                              decoration: InputDecoration(
-                                labelText: 'Event Title',
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                filled: true,
-                                fillColor: Colors.grey[100],
+                          // Event Photo in Circle
+                          Container(
+                            width: 120,
+                            height: 120,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: Colors.deepPurple.withOpacity(0.2),
+                                width: 2,
                               ),
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Please enter an event title';
-                                }
-                                return null;
-                              },
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.deepPurple.withOpacity(0.1),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: ClipOval(
+                              child: GestureDetector(
+                                onTap: _pickEventPhoto,
+                                child: _eventPhoto == null
+                                    ? Container(
+                                        color: Colors.grey[50],
+                                        child: Column(
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          children: [
+                                            Icon(
+                                              Icons.add_photo_alternate_rounded,
+                                              size: 40,
+                                              color: Colors.deepPurple.withOpacity(0.8),
+                                            ),
+                                            const SizedBox(height: 8),
+                                            Text(
+                                              'Add Photo',
+                                              style: TextStyle(
+                                                fontSize: 14,
+                                                color: Colors.deepPurple.withOpacity(0.8),
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      )
+                                    : Stack(
+                                        fit: StackFit.expand,
+                                        children: [
+                                          Image.file(
+                                            _eventPhoto!,
+                                            fit: BoxFit.cover,
+                                          ),
+                                          Container(
+                                            decoration: BoxDecoration(
+                                              gradient: LinearGradient(
+                                                begin: Alignment.topCenter,
+                                                end: Alignment.bottomCenter,
+                                                colors: [
+                                                  Colors.black.withOpacity(0.3),
+                                                  Colors.black.withOpacity(0.1),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                          Positioned(
+                                            bottom: 8,
+                                            right: 8,
+                                            child: Container(
+                                              decoration: BoxDecoration(
+                                                color: Colors.white.withOpacity(0.9),
+                                                shape: BoxShape.circle,
+                                                boxShadow: [
+                                                  BoxShadow(
+                                                    color: Colors.black.withOpacity(0.1),
+                                                    blurRadius: 8,
+                                                    offset: const Offset(0, 2),
+                                                  ),
+                                                ],
+                                              ),
+                                              child: IconButton(
+                                                icon: const Icon(
+                                                  Icons.edit,
+                                                  color: Colors.deepPurple,
+                                                  size: 20,
+                                                ),
+                                                onPressed: _pickEventPhoto,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                              ),
                             ),
                           ),
                           const SizedBox(width: 16),
-                          // Event Photo
+                          // Event Title
                           Expanded(
-                            flex: 3,
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 const Text(
-                                  'Event Photo',
+                                  'Event Title',
                                   style: TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold,
@@ -352,247 +425,209 @@ class _EventMembersScreenState extends State<EventMembersScreen> {
                                   ),
                                 ),
                                 const SizedBox(height: 8),
-                                GestureDetector(
-                                  onTap: _pickEventPhoto,
-                                  child: Container(
-                                    height: 200,
-                                    width: double.infinity,
-                                    decoration: BoxDecoration(
-                                      color: Colors.grey[50],
-                                      borderRadius: BorderRadius.circular(16),
-                                      border: Border.all(
-                                        color: Colors.deepPurple.withOpacity(0.2),
-                                        width: 2,
-                                      ),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.deepPurple.withOpacity(0.1),
-                                          blurRadius: 10,
-                                          offset: const Offset(0, 4),
-                                        ),
-                                      ],
+                                TextFormField(
+                                  controller: _titleController,
+                                  decoration: InputDecoration(
+                                    hintText: 'Enter event title',
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
                                     ),
-                                    child: _eventPhoto == null
-                                        ? Column(
-                                            mainAxisAlignment: MainAxisAlignment.center,
-                                            children: [
-                                              Container(
-                                                padding: const EdgeInsets.all(20),
-                                                decoration: BoxDecoration(
-                                                  color: Colors.deepPurple.withOpacity(0.05),
-                                                  shape: BoxShape.circle,
-                                                ),
-                                                child: Icon(
-                                                  Icons.add_photo_alternate_rounded,
-                                                  size: 48,
-                                                  color: Colors.deepPurple.withOpacity(0.8),
-                                                ),
-                                              ),
-                                              const SizedBox(height: 16),
-                                              Text(
-                                                'Add Event Photo',
-                                                style: TextStyle(
-                                                  fontSize: 18,
-                                                  color: Colors.deepPurple.withOpacity(0.8),
-                                                  fontWeight: FontWeight.w600,
-                                                ),
-                                              ),
-                                              const SizedBox(height: 8),
-                                              Text(
-                                                'Tap to choose a photo from your gallery',
-                                                style: TextStyle(
-                                                  fontSize: 14,
-                                                  color: Colors.grey[600],
-                                                ),
-                                                textAlign: TextAlign.center,
-                                              ),
-                                            ],
-                                          )
-                                        : Stack(
-                                            fit: StackFit.expand,
-                                            children: [
-                                              ClipRRect(
-                                                borderRadius: BorderRadius.circular(16),
-                                                child: Image.file(
-                                                  _eventPhoto!,
-                                                  fit: BoxFit.cover,
-                                                ),
-                                              ),
-                                              Container(
-                                                decoration: BoxDecoration(
-                                                  borderRadius: BorderRadius.circular(16),
-                                                  gradient: LinearGradient(
-                                                    begin: Alignment.topCenter,
-                                                    end: Alignment.bottomCenter,
-                                                    colors: [
-                                                      Colors.black.withOpacity(0.3),
-                                                      Colors.black.withOpacity(0.1),
-                                                    ],
-                                                  ),
-                                                ),
-                                              ),
-                                              Positioned(
-                                                top: 12,
-                                                right: 12,
-                                                child: Container(
-                                                  decoration: BoxDecoration(
-                                                    color: Colors.white.withOpacity(0.9),
-                                                    shape: BoxShape.circle,
-                                                    boxShadow: [
-                                                      BoxShadow(
-                                                        color: Colors.black.withOpacity(0.1),
-                                                        blurRadius: 8,
-                                                        offset: const Offset(0, 2),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                  child: IconButton(
-                                                    icon: const Icon(
-                                                      Icons.edit,
-                                                      color: Colors.deepPurple,
-                                                      size: 20,
-                                                    ),
-                                                    onPressed: _pickEventPhoto,
-                                                  ),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
+                                    filled: true,
+                                    fillColor: Colors.grey[100],
                                   ),
+                                  validator: (value) {
+                                    if (value == null || value.isEmpty) {
+                                      return 'Please enter an event title';
+                                    }
+                                    return null;
+                                  },
                                 ),
-                                if (_eventPhoto != null) ...[
-                                  const SizedBox(height: 12),
-                                  Text(
-                                    'Tap the edit icon to change the photo',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.grey[600],
-                                      fontStyle: FontStyle.italic,
-                                    ),
-                                  ),
-                                ],
                               ],
                             ),
                           ),
                         ],
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 16),
+                    // Event Members Section
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Container(
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(12),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.05),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ],
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.05),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
                             ),
-                            child: Column(
-                              children: [
-                                ListTile(
-                                  title: const Text(
-                                    'Event Members',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.black87,
-                                    ),
-                                  ),
-                                  trailing: FilledButton.icon(
-                                    onPressed: _showMemberSelectionSheet,
-                                    icon: const Icon(Icons.add),
-                                    label: const Text('Add Members'),
-                                    style: FilledButton.styleFrom(
-                                      backgroundColor: Colors.deepPurple,
-                                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                    ),
+                          ],
+                        ),
+                        child: Column(
+                          children: [
+                            ListTile(
+                              title: const Text(
+                                'Event Members',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                              trailing: FilledButton.icon(
+                                onPressed: _showMemberSelectionSheet,
+                                icon: const Icon(Icons.add),
+                                label: const Text('Add Members'),
+                                style: FilledButton.styleFrom(
+                                  backgroundColor: Colors.deepPurple,
+                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
                                   ),
                                 ),
-                                if (_selectedMembers.isEmpty)
-                                  Container(
-                                    padding: const EdgeInsets.all(16),
-                                    decoration: BoxDecoration(
-                                      color: Colors.grey[50],
-                                      borderRadius: const BorderRadius.vertical(
-                                        bottom: Radius.circular(12),
-                                      ),
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        Icon(
-                                          Icons.people_outline,
-                                          color: Colors.grey[600],
-                                          size: 24,
-                                        ),
-                                        const SizedBox(width: 12),
-                                        Text(
-                                          'No members added yet',
-                                          style: TextStyle(
-                                            color: Colors.grey[600],
-                                            fontSize: 16,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  )
-                                else
-                                  Container(
-                                    decoration: BoxDecoration(
-                                      color: Colors.grey[50],
-                                      borderRadius: const BorderRadius.vertical(
-                                        bottom: Radius.circular(12),
-                                      ),
-                                    ),
-                                    child: ListView.builder(
-                                      shrinkWrap: true,
-                                      physics: const NeverScrollableScrollPhysics(),
-                                      itemCount: _selectedMembers.length,
-                                      itemBuilder: (context, index) {
-                                        final member = _selectedMembers[index];
-                                        return ListTile(
-                                          leading: CircleAvatar(
-                                            backgroundColor: Colors.deepPurple.withOpacity(0.1),
-                                            child: Text(
-                                              member['avatar'],
-                                              style: const TextStyle(
-                                                color: Colors.deepPurple,
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                            ),
-                                          ),
-                                          title: Text(member['name']),
-                                          subtitle: Text(member['email']),
-                                          trailing: IconButton(
-                                            icon: const Icon(
-                                              Icons.remove_circle_outline,
-                                              color: Colors.red,
-                                            ),
-                                            onPressed: () {
-                                              setState(() {
-                                                member['selected'] = false;
-                                                _selectedMembers.remove(member);
-                                              });
-                                            },
-                                          ),
-                                        );
-                                      },
-                                    ),
-                                  ),
-                              ],
+                              ),
                             ),
-                          ),
-                        ],
+                            if (_selectedMembers.isEmpty)
+                              Container(
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: Colors.grey[50],
+                                  borderRadius: const BorderRadius.vertical(
+                                    bottom: Radius.circular(12),
+                                  ),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.people_outline,
+                                      color: Colors.grey[600],
+                                      size: 24,
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Text(
+                                      'No members added yet',
+                                      style: TextStyle(
+                                        color: Colors.grey[600],
+                                        fontSize: 16,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              )
+                            else
+                              Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.grey[50],
+                                  borderRadius: const BorderRadius.vertical(
+                                    bottom: Radius.circular(12),
+                                  ),
+                                ),
+                                child: ListView.builder(
+                                  shrinkWrap: true,
+                                  physics: const NeverScrollableScrollPhysics(),
+                                  itemCount: _selectedMembers.length,
+                                  itemBuilder: (context, index) {
+                                    final member = _selectedMembers[index];
+                                    return ListTile(
+                                      leading: CircleAvatar(
+                                        backgroundColor: Colors.deepPurple.withOpacity(0.1),
+                                        child: Text(
+                                          member['avatar'],
+                                          style: const TextStyle(
+                                            color: Colors.deepPurple,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                      title: Text(member['name']),
+                                      subtitle: Text(member['email']),
+                                      trailing: IconButton(
+                                        icon: const Icon(
+                                          Icons.remove_circle_outline,
+                                          color: Colors.red,
+                                        ),
+                                        onPressed: () {
+                                          setState(() {
+                                            member['selected'] = false;
+                                            _selectedMembers.remove(member);
+                                          });
+                                        },
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    // Privacy Settings Section
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.05),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Padding(
+                              padding: EdgeInsets.all(16.0),
+                              child: Text(
+                                'Privacy Settings',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                            ),
+                            RadioListTile<String>(
+                              title: const Text(
+                                'Small Personal Event Group',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              subtitle: const Text('Members can see all photos'),
+                              value: 'personal',
+                              groupValue: _selectedPrivacy,
+                              onChanged: (value) {
+                                setState(() {
+                                  _selectedPrivacy = value!;
+                                });
+                              },
+                              activeColor: Colors.deepPurple,
+                            ),
+                            RadioListTile<String>(
+                              title: const Text(
+                                'Big Public Group',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              subtitle: const Text('Members can only see their own photos'),
+                              value: 'public',
+                              groupValue: _selectedPrivacy,
+                              onChanged: (value) {
+                                setState(() {
+                                  _selectedPrivacy = value!;
+                                });
+                              },
+                              activeColor: Colors.deepPurple,
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ],
