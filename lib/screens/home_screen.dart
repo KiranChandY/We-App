@@ -306,22 +306,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       margin: const EdgeInsets.only(bottom: 16),
       child: InkWell(
         onTap: () {
-          Navigator.push(
-            context,
-            PageRouteBuilder(
-              pageBuilder: (context, animation, secondaryAnimation) => EventDetailsScreen(
-                eventId: event['id'],
-                eventTitle: event['title'],
-                eventType: event['type'],
-              ),
-              transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                return FadeTransition(
-                  opacity: animation,
-                  child: child,
-                );
-              },
-            ),
-          );
+          _navigateToEventDetails(event);
         },
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -386,6 +371,24 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  void _navigateToEventDetails(Map<String, dynamic> event) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => EventDetailsScreen(
+          eventId: event['id'],
+          eventTitle: event['title'],
+          eventType: event['type'],
+          members: (event['members'] as List<String>? ?? []).map((member) => {
+            'id': member,
+            'name': member,
+            'avatar': member[0].toUpperCase(),
+          }).toList(),
         ),
       ),
     );

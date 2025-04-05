@@ -267,6 +267,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
             eventTitle: _titleController.text,
             eventPhoto: _eventPhoto,
             eventType: _selectedEventType,
+            members: [], // Initially no members
           ),
         ),
       );

@@ -259,6 +259,7 @@ class _EventMembersScreenState extends State<EventMembersScreen> {
             eventTitle: _titleController.text,
             eventPhoto: _eventPhoto,
             eventType: 'Custom', // Default event type
+            members: [], // Initially no members
           ),
         ),
       );

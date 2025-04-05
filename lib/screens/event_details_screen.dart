@@ -5,12 +5,14 @@ import 'dart:io';
 import 'package:photo_manager/photo_manager.dart';
 import 'package:flutter/services.dart';
 import 'photo_review_screen.dart';
+import 'photo_assignment_screen.dart';
 
 class EventDetailsScreen extends StatefulWidget {
   final String eventId;
   final String eventTitle;
   final File? eventPhoto;
   final String eventType;
+  final List<Map<String, dynamic>> members;
 
   const EventDetailsScreen({
     super.key,
@@ -18,6 +20,7 @@ class EventDetailsScreen extends StatefulWidget {
     required this.eventTitle,
     this.eventPhoto,
     required this.eventType,
+    required this.members,
   });
 
   @override
@@ -234,9 +237,10 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
                                   ? Colors.deepPurple.withValues(red: 103, green: 58, blue: 183, alpha: 26)
                                   : Colors.grey.withValues(red: 158, green: 158, blue: 158, alpha: 26),
                               child: Text(
-                                member['avatar'],
+                                member['avatar'].toString().substring(0, 1).toUpperCase(),
                                 style: TextStyle(
                                   color: isMemberAdmin ? Colors.white : Colors.black87,
+                                  fontWeight: FontWeight.bold,
                                 ),
                               ),
                             ),
@@ -497,7 +501,13 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
                 return ListTile(
                   leading: CircleAvatar(
                     backgroundColor: Colors.grey[300],
-                    child: Text(user['avatar']),
+                    child: Text(
+                      user['avatar'].toString().substring(0, 1).toUpperCase(),
+                      style: const TextStyle(
+                        color: Colors.black87,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
                   title: Text(user['name']),
                   subtitle: Text(user['email']),
@@ -807,52 +817,44 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
   Future<void> _selectPhotos() async {
     final BuildContext contextRef = context;
     try {
+      // Show loading indicator
+      if (!mounted) return;
+      showDialog(
+        context: contextRef,
+        barrierDismissible: false,
+        builder: (context) => const Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+
       // Request permission to access photos
       final PermissionState permission = await PhotoManager.requestPermissionExtend();
       if (!permission.isAuth) {
-        if (mounted) {
-          ScaffoldMessenger.of(contextRef).showSnackBar(
-            const SnackBar(
-              content: Text('Permission to access photos was denied'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
+        if (!mounted) return;
+        Navigator.pop(contextRef);
+        ScaffoldMessenger.of(contextRef).showSnackBar(
+          const SnackBar(
+            content: Text('Permission to access photos was denied'),
+            backgroundColor: Colors.red,
+          ),
+        );
         return;
       }
 
-      // Get all photos
+      // Get all photos with pagination
       final List<AssetPathEntity> albums = await PhotoManager.getAssetPathList(
         type: RequestType.image,
       );
       
       if (albums.isEmpty) {
-        if (mounted) {
-          ScaffoldMessenger.of(contextRef).showSnackBar(
-            const SnackBar(
-              content: Text('No photo albums found'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-        return;
-      }
-
-      // Get photos from first album
-      final List<AssetEntity> allPhotos = await albums.first.getAssetListRange(
-        start: 0,
-        end: 10000, // Adjust this number based on your needs
-      );
-
-      if (allPhotos.isEmpty) {
-        if (mounted) {
-          ScaffoldMessenger.of(contextRef).showSnackBar(
-            const SnackBar(
-              content: Text('No photos found in album'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
+        if (!mounted) return;
+        Navigator.pop(contextRef);
+        ScaffoldMessenger.of(contextRef).showSnackBar(
+          const SnackBar(
+            content: Text('No photo albums found'),
+            backgroundColor: Colors.red,
+          ),
+        );
         return;
       }
 
@@ -872,26 +874,45 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
         _endTime!.minute,
       );
 
-      // Filter photos by date range
-      final List<AssetEntity> filteredPhotos = allPhotos.where((photo) {
-        final DateTime photoDate = photo.createDateTime;
-        return photoDate.isAfter(startDateTime) && 
-               photoDate.isBefore(endDateTime.add(const Duration(days: 1)));
-      }).toList();
+      // Get photos in smaller batches and filter by date range
+      const int batchSize = 100;
+      List<AssetEntity> filteredPhotos = [];
+      int start = 0;
+      bool hasMorePhotos = true;
+
+      while (hasMorePhotos && mounted) {
+        final List<AssetEntity> batch = await albums.first.getAssetListRange(
+          start: start,
+          end: start + batchSize,
+        );
+        
+        if (batch.isEmpty) {
+          hasMorePhotos = false;
+        } else {
+          // Filter photos in the current batch
+          filteredPhotos.addAll(batch.where((photo) {
+            final DateTime photoDate = photo.createDateTime;
+            return photoDate.isAfter(startDateTime) && 
+                   photoDate.isBefore(endDateTime.add(const Duration(days: 1)));
+          }));
+          start += batchSize;
+        }
+      }
 
       if (filteredPhotos.isEmpty) {
-        if (mounted) {
-          ScaffoldMessenger.of(contextRef).showSnackBar(
-            const SnackBar(
-              content: Text('No photos found in the selected date range'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
+        if (!mounted) return;
+        Navigator.pop(contextRef);
+        ScaffoldMessenger.of(contextRef).showSnackBar(
+          const SnackBar(
+            content: Text('No photos found in the selected date range'),
+            backgroundColor: Colors.red,
+          ),
+        );
         return;
       }
 
       if (!mounted) return;
+      Navigator.pop(contextRef);
 
       // Show the review screen
       final List<AssetEntity>? selectedPhotos = await Navigator.push(
@@ -901,7 +922,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
             selectedPhotos: filteredPhotos,
             startDate: startDateTime,
             endDate: endDateTime,
-            members: _members.map((m) => m['name'] as String).toList(),
+            members: _members,
           ),
         ),
       );
@@ -913,6 +934,7 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
       }
     } catch (e) {
       if (mounted) {
+        Navigator.pop(contextRef);
         ScaffoldMessenger.of(contextRef).showSnackBar(
           SnackBar(
             content: Text('Error selecting photos: $e'),
@@ -1196,6 +1218,27 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
         );
       },
     );
+  }
+
+  void _navigateToPhotoAssignment(List<AssetEntity> selectedPhotos) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PhotoAssignmentScreen(
+          selectedPhotos: selectedPhotos,
+          startDate: _startDate!,
+          endDate: _endDate!,
+          members: _members,
+        ),
+      ),
+    ).then((assignedPhotos) {
+      if (assignedPhotos != null) {
+        // Handle the assigned photos
+        setState(() {
+          _images.addAll(assignedPhotos);
+        });
+      }
+    });
   }
 
   @override
