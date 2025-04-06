@@ -29,6 +29,7 @@ class _PhotoAssignmentScreenState extends State<PhotoAssignmentScreen> with Sing
   int _currentIndex = 0;
   final Set<String> _assignedPhotoIds = {};
   late TabController _tabController;
+  OverlayEntry? _overlayEntry;
 
   @override
   void initState() {
@@ -43,27 +44,84 @@ class _PhotoAssignmentScreenState extends State<PhotoAssignmentScreen> with Sing
   @override
   void dispose() {
     _tabController.dispose();
+    _removeOverlay();
     super.dispose();
+  }
+
+  void _showNotification(String message, {bool isError = false}) {
+    _removeOverlay();
+    
+    _overlayEntry = OverlayEntry(
+      builder: (context) => Positioned(
+        top: MediaQuery.of(context).padding.top + 16,
+        left: 16,
+        right: 16,
+        child: Material(
+          color: Colors.transparent,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: isError ? Colors.red.shade100 : Colors.green.shade100,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: isError ? Colors.red.shade300 : Colors.green.shade300,
+                width: 1,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  isError ? Icons.error_outline : Icons.check_circle_outline,
+                  color: isError ? Colors.red : Colors.green,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    message,
+                    style: TextStyle(
+                      color: isError ? Colors.red.shade900 : Colors.green.shade900,
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close, size: 20),
+                  color: isError ? Colors.red : Colors.green,
+                  onPressed: _removeOverlay,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+
+    Overlay.of(context).insert(_overlayEntry!);
+    
+    // Auto remove after 3 seconds
+    Future.delayed(const Duration(seconds: 3), _removeOverlay);
+  }
+
+  void _removeOverlay() {
+    _overlayEntry?.remove();
+    _overlayEntry = null;
   }
 
   void _togglePhotoSelection(String photoId) {
     if (_selectedMember == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select a member first'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      _showNotification('Please select a member first', isError: true);
       return;
     }
 
     if (_assignedPhotoIds.contains(photoId)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('This photo is already assigned'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      _showNotification('This photo is already assigned', isError: true);
       return;
     }
 
@@ -74,12 +132,7 @@ class _PhotoAssignmentScreenState extends State<PhotoAssignmentScreen> with Sing
 
   void _selectAllPhotos() {
     if (_selectedMember == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select a member first'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      _showNotification('Please select a member first', isError: true);
       return;
     }
 
@@ -94,12 +147,7 @@ class _PhotoAssignmentScreenState extends State<PhotoAssignmentScreen> with Sing
 
   void _assignSelectedPhotos() {
     if (_selectedMember == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select a member first'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      _showNotification('Please select a member first', isError: true);
       return;
     }
 
@@ -108,12 +156,7 @@ class _PhotoAssignmentScreenState extends State<PhotoAssignmentScreen> with Sing
         .toList();
 
     if (selectedPhotos.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select at least one photo'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      _showNotification('Please select at least one photo', isError: true);
       return;
     }
 
@@ -140,12 +183,7 @@ class _PhotoAssignmentScreenState extends State<PhotoAssignmentScreen> with Sing
       }
     });
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('${selectedPhotos.length} photos assigned to ${_selectedMember}'),
-        backgroundColor: Colors.green,
-      ),
-    );
+    _showNotification('${selectedPhotos.length} photos assigned to ${_selectedMember}');
   }
 
   @override
